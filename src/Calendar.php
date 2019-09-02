@@ -15,6 +15,11 @@ class Calendar {
     const FRIDAY    = 5;
     const SATURDAY  = 6;
 
+    const US_MARKET_OPEN_TIME        = '09:30';
+    const US_MARKET_CLOSE_TIME       = '16:00';
+    const US_MARKET_EARLY_CLOSE_TIME = '14:00';
+
+
     /**
      * @param int $year
      * @return string
@@ -57,7 +62,7 @@ class Calendar {
 
         // Martin Luther King, Jr. Day
         $martinLutherKingJrDay = Carbon::parse( 'third monday of Jan ' . $year );
-        $bankHolidays[] = $martinLutherKingJrDay->format( 'Y-m-d' );
+        $bankHolidays[]        = $martinLutherKingJrDay->format( 'Y-m-d' );
 
         // Presidents Day
         $presidentsDay  = Carbon::parse( 'third monday of Feb ' . $year );
@@ -119,18 +124,15 @@ class Calendar {
     }
 
     /**
-     * @param string $argDate
+     * @param Carbon $date
      * @return bool
      * @throws \Exception
      */
-    public static function isBankHoliday( string $argDate ) {
-        $aDateParts = explode( '-', $argDate );
-        if ( count( $aDateParts ) < 3 ) throw new \Exception( "The date you passed into isBankHoliday() was not YYYY-MM-DD, it was " . $argDate );
+    public static function isBankHoliday( Carbon $date ): bool {
 
-        $year          = $aDateParts[ 0 ];
-        $aBankHolidays = self::getBankHolidaysByYear( $year );
+        $aBankHolidays = self::getBankHolidaysByYear( $date->year );
 
-        if ( in_array( $argDate, $aBankHolidays ) ):
+        if ( in_array( $date, $aBankHolidays ) ):
             return TRUE;
         endif;
 
@@ -138,23 +140,20 @@ class Calendar {
     }
 
     /**
-     * @param string $argDate
+     * @param string $date
      * @return string
      * @throws \Exception
      */
-    public static function getLastBusinessDayOfTheMonth( string $argDate ) : string {
-        $time = strtotime( $argDate );
-        if( $time === false )
-            throw new \Exception( "Unable to find the last business day of the month for this date: " . $argDate );
+    public static function getLastBusinessDayOfTheMonth( Carbon $date ): string {
 
-        $date = date("Y-m-t", $time );
+        $dateToCheck        = $date->modify("last day of this month");
         $keepLooking = TRUE;
 
         do {
-            if ( self::isWeekday( $date ) && !self::isBankHoliday( $date ) ) :
+            if ( self::isWeekday( $dateToCheck ) && !self::isBankHoliday( $dateToCheck ) ) :
                 return $date;
             endif;
-            $date = date('Y-m-d', strtotime($date . ' -1 day' ) );
+            $date = date( 'Y-m-d', strtotime( $date . ' -1 day' ) );
         } while ( $keepLooking );
 
     }
@@ -228,4 +227,12 @@ class Calendar {
 
         return $newDate;
     }
+
+    public static function getPreviousUSMarketClose( Carbon $date ): Carbon {
+        if ( self::isBusinessDay( $date ) ):
+
+        endif;
+    }
+
+
 }
