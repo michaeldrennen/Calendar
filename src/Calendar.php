@@ -3,6 +3,7 @@
 namespace MichaelDrennen\Calendar;
 
 use Carbon\Carbon;
+use Exception;
 
 class Calendar {
 
@@ -123,6 +124,7 @@ class Calendar {
         return $bankHolidays;
     }
 
+
     /**
      * @param Carbon $date
      * @return bool
@@ -132,7 +134,7 @@ class Calendar {
 
         $aBankHolidays = self::getBankHolidaysByYear( $date->year );
 
-        if ( in_array( $date, $aBankHolidays ) ):
+        if ( in_array( $date->toDateString(), $aBankHolidays ) ):
             return TRUE;
         endif;
 
@@ -140,23 +142,22 @@ class Calendar {
     }
 
     /**
-     * @param string $date
-     * @return string
-     * @throws \Exception
+     * @param Carbon $date
+     * @return Carbon
+     * @throws Exception
      */
     public static function getLastBusinessDayOfTheMonth( Carbon $date ): string {
 
-        $dateToCheck        = $date->modify("last day of this month");
+        $dateToCheck = $date->modify( "last day of this month" );
         $keepLooking = TRUE;
 
         do {
             if ( self::isWeekday( $dateToCheck ) && !self::isBankHoliday( $dateToCheck ) ) :
                 return $date;
             endif;
-            $date = date( 'Y-m-d', strtotime( $date . ' -1 day' ) );
+            $date = $dateToCheck->subDay();
         } while ( $keepLooking );
-
-    }
+    } // @codeCoverageIgnore
 
     /**
      * @param string $argDate
@@ -194,17 +195,16 @@ class Calendar {
 
 
     /**
-     * @param string $anchor
+     * @param Carbon $anchor
      * @param int $offset
-     * @return string
-     * @throws \Exception
+     * @return Carbon
+     * @throws Exception
      */
-    public static function getBusinessDateThisManyDaysAway( string $anchor, int $offset ): string {
-        $anchor = date( 'Y-m-d', strtotime( $anchor ) );
+    public static function getBusinessDateThisManyDaysAway( Carbon $anchor, int $offset ): Carbon {
         if ( $offset == 0 && self::isBusinessDay( $anchor ) ):
             return $anchor;
         elseif ( $offset == 0 ):
-            throw new \Exception( "You want to get the next business day zero days away, but $anchor is not a business day." );
+            throw new Exception( "You want to get the next business day zero days away, but " . $anchor->toDateString() . " is not a business day." );
         endif;
 
         if ( $offset > 0 ):
@@ -215,12 +215,16 @@ class Calendar {
         endif;
 
         $counter = 0;
-        $newDate = $anchor;
+        $newDate = $anchor->copy();
         while ( $counter < $offset ):
-            $newDate = date( 'Y-m-d', strtotime( $offsetDirection . "1 day", strtotime( $anchor ) ) );
-            $anchor  = $newDate;
+            if ( '+' == $offsetDirection ):
+                $newDate = $anchor->copy()->addDay();
+            else:
+                $newDate = $anchor->copy()->subDay();
+            endif;
+
+            $anchor = $newDate->copy();
             if ( self::isBusinessDay( $newDate ) ):
-                //echo "\n$newDate is A business day, so " . ($counter + 1) . " \n";
                 $counter++;
             endif;
         endwhile;
@@ -228,10 +232,25 @@ class Calendar {
         return $newDate;
     }
 
-    public static function getPreviousUSMarketClose( Carbon $date ): Carbon {
-        if ( self::isBusinessDay( $date ) ):
 
-        endif;
+    public static function getPreviousUSMarketOpen( Carbon $dateTime ): Carbon {
+        $usMarket = new USMarket();
+        return $usMarket->getPreviousTradingDaysOpen( $dateTime );
+    }
+
+    public static function getPreviousUSMarketClose( Carbon $dateTime ): Carbon {
+        $usMarket = new USMarket();
+        return $usMarket->getPreviousTradingDaysClose( $dateTime );
+    }
+
+    public static function getNextUSMarketOpen( Carbon $dateTime ): Carbon {
+        $usMarket = new USMarket();
+        return $usMarket->getnextTradingDaysOpen( $dateTime );
+    }
+
+    public static function getNextUSMarketClose( Carbon $dateTime ): Carbon {
+        $usMarket = new USMarket();
+        return $usMarket->getNextTradingDaysClose( $dateTime );
     }
 
 

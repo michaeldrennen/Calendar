@@ -3,6 +3,7 @@
 namespace MichaelDrennen\Calendar;
 
 use Carbon\Carbon;
+use Exception;
 
 class USMarket {
 
@@ -18,7 +19,15 @@ class USMarket {
      */
     protected $sifmaEarlyCloseDates = [];
 
+    protected $normalMarketOpenHourEst    = '9';
+    protected $normalMarketOpenMinuteEst  = '30';
+    protected $normalMarketCloseHourEst   = '16';
+    protected $normalMarketCloseMinuteEst = '0';
 
+
+    /**
+     * USMarket constructor.
+     */
     public function __construct() {
         $this->_setSifmaClosedDates();
         $this->_setSifmaEarlyCloseDates();
@@ -58,6 +67,10 @@ class USMarket {
         ];
     }
 
+
+    /**
+     *
+     */
     protected function _setSifmaEarlyCloseDates() {
         $this->sifmaEarlyCloseDates = [
             "New Year's Eve 2018" => Carbon::create( 2018, 12, 31, 14, 0, 0, 'America/New_York' ),
@@ -79,11 +92,275 @@ class USMarket {
     }
 
 
-    public function isUSMarketOpen(Carbon $date): bool {
-        if(in_array($this->sifmaClosedDates)):
-            return false;
+    /**
+     * @param Carbon $date
+     * @return bool
+     */
+    public function isSifmaClosedDate( Carbon $date ): bool {
+        $closedMatches = array_filter( $this->sifmaClosedDates, function ( $closedDate ) use ( $date ) {
+            return $date->toDateString() === $closedDate->toDateString();
+        } );
+
+        if ( empty( $closedMatches ) ):
+            return FALSE;
+        endif;
+        return TRUE;
+    }
+
+
+    /**
+     * @param Carbon $date
+     * @return Carbon
+     */
+    public function isSifmaEarlyCloseDate( Carbon $date ): ?Carbon {
+        $earlyCloseMatches = array_filter( $this->sifmaEarlyCloseDates, function ( $earlyCloseDate ) use ( $date ) {
+            return $date->toDateString() === $earlyCloseDate->toDateString();
+        } );
+
+//        if ( empty( $earlyCloseMatches ) ):
+//            throw new Exception( "This is not an early close date according to SIFMA." );
+//        endif;
+
+        if ( empty( $earlyCloseMatches ) ):
+            return NULL;
         endif;
 
-        if(Calendar::isWeekend($date->toDateString()))
+
+        return reset( $earlyCloseMatches );
+    }
+
+    public function isUSTradingDate( Carbon $date ): bool {
+        // No trading on the weekends.
+        if ( Calendar::isWeekend( $date ) ):
+            return FALSE;
+        endif;
+
+        // If today should be closed according to SIFMA.
+        if ( $this->isSifmaClosedDate( $date ) ):
+            return FALSE;
+        endif;
+
+        return TRUE;
+    }
+
+
+    /**
+     * @param Carbon $dateTime
+     * @return bool
+     */
+    public function isUSTradingDateDuringMarketHours( Carbon $dateTime ): bool {
+        if ( FALSE === $this->isUSTradingDate( $dateTime ) ):
+            return FALSE;
+        endif;
+
+        if ( FALSE === $this->isDuringTradingHours( $dateTime ) ):
+            return FALSE;
+        endif;
+
+        return TRUE;
+    }
+
+    /**
+     * @param Carbon $dateTime
+     * @return bool
+     */
+    public function isBeforeTradingHours( Carbon $dateTime ): bool {
+        $startOfTradingThisDay = $dateTime->copy();
+        $startOfTradingThisDay->setHour( $this->normalMarketOpenHourEst );
+        $startOfTradingThisDay->setMinute( $this->normalMarketOpenMinuteEst );
+        if ( $dateTime->lt( $startOfTradingThisDay ) ):
+            return TRUE;
+        endif;
+        return FALSE;
+    }
+
+
+    /**
+     * @param Carbon $dateTime
+     * @return bool
+     */
+    public function isAfterTradingHours( Carbon $dateTime ): bool {
+        $earlyCloseDate = $this->isSifmaEarlyCloseDate( $dateTime );
+        if ( $earlyCloseDate && $dateTime->gt( $earlyCloseDate ) ):
+            return TRUE;
+        endif;
+
+        $endOfTradingThisDay = $dateTime->copy();
+        $endOfTradingThisDay->setHour( $this->normalMarketCloseHourEst );
+        $endOfTradingThisDay->setMinute( $this->normalMarketCloseMinuteEst );
+        if ( $dateTime->gt( $endOfTradingThisDay ) ):
+            return TRUE;
+        endif;
+        return FALSE;
+    }
+
+
+    /**
+     * @param Carbon $dateTime
+     * @return bool
+     */
+    public function isDuringTradingHours( Carbon $dateTime ): bool {
+        if ( $this->isBeforeTradingHours( $dateTime ) ):
+            return FALSE;
+        endif;
+
+        if ( $this->isAfterTradingHours( $dateTime ) ):
+            return FALSE;
+        endif;
+
+        return TRUE;
+    }
+
+
+    /**
+     * @param Carbon $dateTime
+     * @return bool
+     */
+    public function isUSMarketOpen( Carbon $dateTime ): bool {
+        // No trading on the weekends.
+        if ( Calendar::isWeekend( $dateTime ) ):
+            return FALSE;
+        endif;
+
+        // If today should be closed according to SIFMA.
+        if ( $this->isSifmaClosedDate( $dateTime ) ):
+            return FALSE;
+        endif;
+
+        // Is it before market open time today?
+        $marketOpensToday = $dateTime->copy();
+        $marketOpensToday->setHour( $this->normalMarketOpenHourEst );
+        $marketOpensToday->setMinute( $this->normalMarketOpenMinuteEst );
+
+        // If it's before normal market opening time, return false.
+        if ( $dateTime->lt( $marketOpensToday ) ):
+            return FALSE;
+        endif;
+
+        // If today is an early close day according to SIFMA...
+
+        if ( $earlyCloseDateTime = $this->isSifmaEarlyCloseDate( $dateTime ) ):
+            $marketClosesToday = $earlyCloseDateTime;
+        else:
+            // Else today is a trading day with a normal closing time.
+            $marketClosesToday = $dateTime->copy();
+            $marketClosesToday->setHour( $this->normalMarketCloseHourEst );
+            $marketClosesToday->setMinute( $this->normalMarketCloseMinuteEst );
+        endif;
+
+
+        // If it's after closing time (early or normal), return false.
+        if ( $dateTime->gt( $marketClosesToday ) ):
+            return FALSE;
+        endif;
+
+        // Every reason why the market might get closed has been exhausted.
+        // The market must be open.
+        return TRUE;
+    }
+
+
+    public function getPreviousTradingDay( Carbon $date ): Carbon {
+        $keepLooking = TRUE;
+        $date->setHour( 12 );
+        $date->setMinute( 0 );
+        $date->setSecond( 0 );
+        $currentDate = $date->copy()->subDay();
+        do {
+            if ( $this->isUSTradingDate( $currentDate ) ):
+                return $currentDate;
+            else:
+                $currentDate->subDay();
+            endif;
+        } while ( $keepLooking );
+    }
+
+
+    public function getNextTradingDay( Carbon $date ): Carbon {
+        $keepLooking = TRUE;
+        $date->setHour( 12 );
+        $date->setMinute( 0 );
+        $date->setSecond( 0 );
+        $currentDate = $date->copy()->addDay();
+        do {
+            if ( $this->isUSTradingDate( $currentDate ) ):
+                return $currentDate;
+            else:
+                $currentDate->addDay();
+            endif;
+        } while ( $keepLooking );
+    }
+
+
+    public function getPreviousTradingDaysOpen( Carbon $date ): Carbon {
+        $previousTradingDay = $this->getPreviousTradingDay( $date );
+        $previousTradingDay->setHour( $this->normalMarketOpenHourEst );
+        $previousTradingDay->setMinute( $this->normalMarketOpenMinuteEst );
+        return $previousTradingDay;
+    }
+
+    public function getPreviousTradingDaysClose( Carbon $date ): Carbon {
+        $previousTradingDay = $this->getPreviousTradingDay( $date );
+
+        if ( $earlyClose = $this->isSifmaEarlyCloseDate( $date ) ):
+            return $earlyClose;
+        endif;
+
+        $previousTradingDay->setHour( $this->normalMarketCloseHourEst );
+        $previousTradingDay->setMinute( $this->normalMarketCloseMinuteEst );
+        return $previousTradingDay;
+    }
+
+    public function getNextTradingDaysOpen( Carbon $date ): Carbon {
+        $nextTradingDay = $this->getNextTradingDay( $date );
+        $nextTradingDay->setHour( $this->normalMarketOpenHourEst );
+        $nextTradingDay->setMinute( $this->normalMarketOpenMinuteEst );
+        return $nextTradingDay;
+    }
+
+    public function getNextTradingDaysClose( Carbon $date ): Carbon {
+        $nextTradingDay = $this->getNextTradingDay( $date );
+
+        if ( $earlyClose = $this->isSifmaEarlyCloseDate( $date ) ):
+            return $earlyClose;
+        endif;
+
+        $nextTradingDay->setHour( $this->normalMarketCloseHourEst );
+        $nextTradingDay->setMinute( $this->normalMarketCloseMinuteEst );
+        return $nextTradingDay;
+    }
+
+
+    public function getPreviousMarketClose( Carbon $dateTime ): Carbon {
+        // IF: Its a trading day, but before trading has begun
+        // ELSE: It's a trading day, and during trading hours.
+        // ELSE: It's not a trading day
+        // SO: I return the previous trading day's close.
+        if ( $this->isUSTradingDate( $dateTime ) && $this->isBeforeTradingHours( $dateTime ) ):
+        elseif ( $this->isUSTradingDate( $dateTime ) && $this->isDuringTradingHours( $dateTime ) ):
+        elseif ( FALSE === $this->isUSTradingDate( $dateTime ) ):
+            $previousTradingDay = $this->getPreviousTradingDay( $dateTime );
+            if ( $earlyCloseDay = $this->isSifmaEarlyCloseDate( $previousTradingDay ) ):
+                return $earlyCloseDay;
+            else:
+                return $this->getPreviousTradingDaysClose( $dateTime );
+            endif;
+        endif;
+        // ELSE: After hours on a trading day.
+        // SO: I return this days close.
+        $dateTime->setHour( $this->normalMarketCloseHourEst );
+        $dateTime->setMinute( $this->normalMarketCloseMinuteEst );
+        return $dateTime;
+    }
+
+    public function getPreviousMarketOpen( Carbon $dateTime ): Carbon {
+        if ( $this->isUSMarketOpen( $dateTime ) ):
+            $previousTradingDay = $this->getPreviousTradingDay( $dateTime );
+            if ( $earlyCloseDay = $this->isSifmaEarlyCloseDate( $previousTradingDay ) ):
+                return $earlyCloseDay;
+            else:
+                return $previousTradingDay;
+            endif;
+        endif;
     }
 }

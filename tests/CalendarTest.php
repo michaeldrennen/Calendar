@@ -2,6 +2,7 @@
 
 use PHPUnit\Framework\TestCase;
 use MichaelDrennen\Calendar\Calendar;
+use Carbon\Carbon;
 
 class CalendarTest extends TestCase {
 
@@ -9,7 +10,7 @@ class CalendarTest extends TestCase {
      * @test
      */
     public function testIsBusinessDate() {
-        $aBusinessDay = '2019-08-20';
+        $aBusinessDay   = Carbon::create( 2019, 8, 20, 12, 0, 0, 'America/New_York' );
         $isBusinessDay = Calendar::isBusinessDay( $aBusinessDay );
         $this->assertTrue( $isBusinessDay );
     }
@@ -18,12 +19,12 @@ class CalendarTest extends TestCase {
      * @test
      */
     public function testIsNotBusinessDay() {
-        $notBusinessDay = '2019-08-18';
-        $isBusinessDay = Calendar::isBusinessDay( $notBusinessDay );
+        $notBusinessDay   = Carbon::create( 2019, 8, 18, 12, 0, 0, 'America/New_York' );
+        $isBusinessDay  = Calendar::isBusinessDay( $notBusinessDay );
         $this->assertFalse( $isBusinessDay );
 
-        $notBusinessDay = '2019-07-04';
-        $isBusinessDay = Calendar::isBusinessDay( $notBusinessDay );
+        $notBusinessDay   = Carbon::create( 2019, 7, 4, 12, 0, 0, 'America/New_York' );
+        $isBusinessDay  = Calendar::isBusinessDay( $notBusinessDay );
         $this->assertFalse( $isBusinessDay );
     }
 
@@ -31,7 +32,7 @@ class CalendarTest extends TestCase {
      * @test
      */
     public function testIsBankHoliday() {
-        $bankHoliday = '2019-07-04';
+        $bankHoliday   = Carbon::create( 2019, 7, 4, 12, 0, 0, 'America/New_York' );
         $isBankHoliday = Calendar::isBankHoliday( $bankHoliday );
         $this->assertTrue( $isBankHoliday );
     }
@@ -50,23 +51,23 @@ class CalendarTest extends TestCase {
      * @test
      */
     public function testSwitchCasesAreIncludedInBankHolidaysByYearArray() {
-        $year = 2023;
+        $year         = 2023;
         $bankHolidays = Calendar::getBankHolidaysByYear( $year );
         $this->assertContains( "$year-01-02", $bankHolidays );
 
-        $year = 2022;
+        $year         = 2022;
         $bankHolidays = Calendar::getBankHolidaysByYear( $year );
         $this->assertContains( "$year-01-03", $bankHolidays );
 
-        $year = 2021;
+        $year         = 2021;
         $bankHolidays = Calendar::getBankHolidaysByYear( $year );
         $this->assertContains( "$year-07-05", $bankHolidays );
 
-        $year = 2020;
+        $year         = 2020;
         $bankHolidays = Calendar::getBankHolidaysByYear( $year );
         $this->assertContains( "$year-07-03", $bankHolidays );
 
-        $year = 1999;
+        $year         = 1999;
         $bankHolidays = Calendar::getBankHolidaysByYear( $year );
         $this->assertContains( "$year-12-31", $bankHolidays );
     }
@@ -75,58 +76,46 @@ class CalendarTest extends TestCase {
      * @test
      */
     public function testGetLastBusinessDayOfMonthIsAugThirty2019() {
-        $stringDate = '2019-08-01';
-        $augThirty2019 = '2019-08-30';
-        $lastBusinessDayOfMonth = Calendar::getLastBusinessDayOfTheMonth( $stringDate );
-        $this->assertEquals( $lastBusinessDayOfMonth, $augThirty2019);
+        $inputDate              = Carbon::create( 2019, 8, 1 );
+        $expectedDate           = Carbon::create( 2019, 8, 30 );
+        $lastBusinessDayOfMonth = Calendar::getLastBusinessDayOfTheMonth( $inputDate );
+        $this->assertEquals( $lastBusinessDayOfMonth, $expectedDate );
     }
+
 
     /**
      * @test
-     */
-    public function testInvalidStringDateThrowsException() {
-        $invalidStringDate = 'foo';
-        $this->expectExceptionMessage( "Unable to find the last business day of the month for this date: " . $invalidStringDate );
-        $lastBusinessDayOfMonth = Calendar::getLastBusinessDayOfTheMonth( $invalidStringDate );
-        echo "You should not ever see: $lastBusinessDayOfMonth since exception should have been thrown.";
-    }
-
-    /**
-     * @test
+     * @group tt
      */
     public function testBusinessDateOffsetDaysAwayIsExpectedBusinessDate() {
-        $offset = 4;
-        $anchorDate = '2019-08-26';
-        $expectedBusinessDate = '2019-08-30';
-        $businessDate = Calendar::getBusinessDateThisManyDaysAway( $anchorDate, $offset );
-        $this->assertEquals( $businessDate, $expectedBusinessDate);
+        $offset               = 4;
+        $anchorDate           = Carbon::create( 2019, 8, 26, 12, 0, 0, 'America/New_York' );
+        $expectedBusinessDate = Carbon::create( 2019, 8, 30, 12, 0, 0, 'America/New_York' );
+        $businessDate         = Calendar::getBusinessDateThisManyDaysAway( $anchorDate, $offset );
+        $this->assertTrue( $businessDate->eq( $expectedBusinessDate ) );
 
-        $offset = 0;
+        $offset               = 0;
         $expectedBusinessDate = $anchorDate;
-        $businessDate = Calendar::getBusinessDateThisManyDaysAway( $anchorDate, $offset );
-        $this->assertEquals( $businessDate, $expectedBusinessDate);
+        $businessDate         = Calendar::getBusinessDateThisManyDaysAway( $anchorDate, $offset );
+        $this->assertTrue( $businessDate->eq( $expectedBusinessDate ) );
 
-        $offset = -4;
-        $expectedBusinessDate = '2019-08-20';
-        $businessDate = Calendar::getBusinessDateThisManyDaysAway( $anchorDate, $offset );
-        $this->assertEquals( $businessDate, $expectedBusinessDate);
+        $offset               = -4;
+        $expectedBusinessDate = Carbon::create( 2019, 8, 20, 12, 0, 0, 'America/New_York' );
+        $businessDate         = Calendar::getBusinessDateThisManyDaysAway( $anchorDate, $offset );
+
+        $this->assertTrue( $businessDate->eq( $expectedBusinessDate ) );
     }
 
     /**
      * @test
      */
     public function testBusinessDateOffsetZeroDaysAwayThrowsException() {
-        $offset = 0;
-        $anchorDate = '2019-08-31';
-        $this->expectExceptionMessage( "You want to get the next business day zero days away, but $anchorDate is not a business day." );
+        $offset     = 0;
+        $anchorDate = Carbon::create( 2019, 8, 31 );
+        $this->expectExceptionMessage( "You want to get the next business day zero days away, but " . $anchorDate->toDateString() . " is not a business day." );
         $businessDate = Calendar::getBusinessDateThisManyDaysAway( $anchorDate, $offset );
         echo "You should not ever see: $businessDate since exception should have been thrown.";
     }
-
-
-
-
-
 
 
 }
