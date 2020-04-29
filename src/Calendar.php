@@ -24,7 +24,7 @@ class Calendar {
     /**
      * @param int $year
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
     public static function getEasterForYear( int $year ): string {
         foreach ( Easter::$dates as $date ):
@@ -35,14 +35,14 @@ class Calendar {
             endif;
         endforeach;
 
-        throw new \Exception( "Unable to find the date of Easter for the year $year" );
+        throw new Exception( "Unable to find the date of Easter for the year $year" );
     }
 
 
     /**
      * @param int $year
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public static function getBankHolidaysByYear( int $year ): array {
 
@@ -128,7 +128,7 @@ class Calendar {
     /**
      * @param Carbon $date
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public static function isBankHoliday( Carbon $date ): bool {
 
@@ -179,7 +179,7 @@ class Calendar {
     /**
      * @param $argDate
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public static function isBusinessDay( $argDate ) {
         if ( self::isWeekend( $argDate ) ):
