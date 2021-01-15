@@ -63,7 +63,31 @@ class USMarket {
             "Thanksgiving Day 2020"       => Carbon::create( 2020, 11, 26 ),
             "Christmas Day 2020"          => Carbon::create( 2020, 12, 25 ),
 
-            "New Year's Day 2021" => Carbon::create( 2021, 1, 1 ),
+            "New Year's Day 2021"         => Carbon::create( 2021, 1, 1 ),
+            "Martin Luther King Day 2021" => Carbon::create( 2021, 1, 18 ),
+            "Presidents Day 2021"         => Carbon::create( 2021, 2, 15 ),
+            "Good Friday 2021"            => Carbon::create( 2021, 4, 2 ),
+            "Memorial Day 2021"           => Carbon::create( 2021, 5, 31 ),
+            "U.S. Independence Day 2021"  => Carbon::create( 2021, 7, 5 ),
+            "Labor Day 2021"              => Carbon::create( 2021, 9, 6 ),
+            "Columbus Day 2021"           => Carbon::create( 2021, 10, 11 ),
+            "Veterans Day 2021"           => Carbon::create( 2021, 11, 11 ),
+            "Thanksgiving Day 2021"       => Carbon::create( 2021, 11, 25 ),
+            "Christmas Day 2021"          => Carbon::create( 2021, 12, 24 ),
+
+            "New Year's Day 2022"         => Carbon::create( 2022, 1, 1 ),
+            "Martin Luther King Day 2022" => Carbon::create( 2022, 1, 17 ),
+            "Presidents Day 2022"         => Carbon::create( 2022, 2, 21 ),
+            "Good Friday 2022"            => Carbon::create( 2022, 4, 15 ),
+            "Memorial Day 2022"           => Carbon::create( 2022, 5, 30 ),
+            "U.S. Independence Day 2022"  => Carbon::create( 2022, 7, 4 ),
+            "Labor Day 2022"              => Carbon::create( 2022, 9, 5 ),
+            "Columbus Day 2022"           => Carbon::create( 2022, 10, 10 ),
+            "Veterans Day 2022"           => Carbon::create( 2022, 11, 11 ),
+            "Thanksgiving Day 2022"       => Carbon::create( 2022, 11, 24 ),
+            "Christmas Day 2022"          => Carbon::create( 2022, 12, 26 ),
+
+            "New Year's Day 2023"         => Carbon::create( 2023, 1, 2 ),
         ];
     }
 
@@ -88,6 +112,20 @@ class USMarket {
             "Thanksgiving Eve 2020"          => Carbon::create( 2020, 11, 27, 14, 0, 0, 'America/New_York' ),
             "Christmas 2020"                 => Carbon::create( 2020, 12, 24, 14, 0, 0, 'America/New_York' ),
             "New Year's Eve 2020"            => Carbon::create( 2020, 12, 31, 14, 0, 0, 'America/New_York' ),
+
+            "Good Friday Eve 2021"           => Carbon::create( 2021, 4, 2, 14, 0, 0, 'America/New_York' ),
+            "Memorial Day Eve 2021"          => Carbon::create( 2021, 5, 28, 14, 0, 0, 'America/New_York' ),
+            "U.S. Independence Day Eve 2021" => Carbon::create( 2021, 7, 2, 14, 0, 0, 'America/New_York' ),
+            "Thanksgiving Eve 2021"          => Carbon::create( 2021, 11, 26, 14, 0, 0, 'America/New_York' ),
+            "Christmas 2021"                 => Carbon::create( 2021, 12, 23, 14, 0, 0, 'America/New_York' ),
+            "New Year's Eve 2021"            => Carbon::create( 2021, 12, 31, 14, 0, 0, 'America/New_York' ),
+
+            "Good Friday Eve 2022"           => Carbon::create( 2022, 4, 14, 14, 0, 0, 'America/New_York' ),
+            "Memorial Day Eve 2022"          => Carbon::create( 2022, 5, 27, 14, 0, 0, 'America/New_York' ),
+            "U.S. Independence Day Eve 2022" => Carbon::create( 2022, 7, 1, 14, 0, 0, 'America/New_York' ),
+            "Thanksgiving Eve 2022"          => Carbon::create( 2022, 11, 25, 14, 0, 0, 'America/New_York' ),
+            "Christmas 2022"                 => Carbon::create( 2022, 12, 23, 14, 0, 0, 'America/New_York' ),
+            "New Year's Eve 2022"            => Carbon::create( 2022, 12, 30, 14, 0, 0, 'America/New_York' ),
         ];
     }
 
