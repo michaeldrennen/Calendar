@@ -3,7 +3,6 @@
 namespace MichaelDrennen\Calendar;
 
 use Carbon\Carbon;
-use Exception;
 
 class USMarket {
 
@@ -11,18 +10,18 @@ class USMarket {
      * @var array An array of Carbon objects representing dates the U.S. markets should be close according to SIFMA.
      * @see https://www.sifma.org/resources/general/holiday-schedule/
      */
-    protected $sifmaClosedDates = [];
+    protected array $sifmaClosedDates = [];
 
     /**
      * @var array An array of Carbon objects representing dates the U.S. markets should be closing early according to SIFMA.
      * @see https://www.sifma.org/resources/general/holiday-schedule/
      */
-    protected $sifmaEarlyCloseDates = [];
+    protected array $sifmaEarlyCloseDates = [];
 
-    protected $normalMarketOpenHourEst    = '9';
-    protected $normalMarketOpenMinuteEst  = '30';
-    protected $normalMarketCloseHourEst   = '16';
-    protected $normalMarketCloseMinuteEst = '0';
+    protected string $normalMarketOpenHourEst   = '9';
+    protected        $normalMarketOpenMinuteEst  = '30';
+    protected string $normalMarketCloseHourEst   = '16';
+    protected string $normalMarketCloseMinuteEst = '0';
 
 
     /**
@@ -36,7 +35,7 @@ class USMarket {
     /**
      *
      */
-    protected function _setSifmaClosedDates() {
+    protected function _setSifmaClosedDates(): void {
         $this->sifmaClosedDates = [
 
             "New Year's Day 2019"         => Carbon::create( 2019, 1, 1 ),
@@ -95,7 +94,7 @@ class USMarket {
     /**
      *
      */
-    protected function _setSifmaEarlyCloseDates() {
+    protected function _setSifmaEarlyCloseDates(): void {
         $this->sifmaEarlyCloseDates = [
             "New Year's Eve 2018" => Carbon::create( 2018, 12, 31, 14, 0, 0, 'America/New_York' ),
 
@@ -148,7 +147,8 @@ class USMarket {
 
     /**
      * @param Carbon $date
-     * @return Carbon
+     *
+     * @return \Carbon\Carbon|null
      */
     public function isSifmaEarlyCloseDate( Carbon $date ): ?Carbon {
         $earlyCloseMatches = array_filter( $this->sifmaEarlyCloseDates, function ( $earlyCloseDate ) use ( $date ) {
